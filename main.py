@@ -7,13 +7,11 @@ from tkinter import ttk
 
 GAME = "openarena"
 GAME_EXE_PATH = "openarena"
-SORT_VALUES = ("no", "ping", "address", "players", "pass", "map", "gametype", "name")
 
-def getServerListJson(game: str, sortBy: str):
-    assert(sortBy in SORT_VALUES)
+def getServerListJson(game: str):
     # Note: Don't use urrlib, it's slow
     return sp.run(
-        ["curl", "https://dpmaster.deathmask.net/?game={}&json=1&nocolors=1&showping=1&sort={}".format(game, sortBy), "-s"],
+        ["curl", "https://dpmaster.deathmask.net/?game={}&json=1&nocolors=1&showping=1".format(game), "-s"],
         stdout=sp.PIPE,
         stderr=sp.PIPE).stdout.decode().strip()
 
@@ -25,6 +23,9 @@ def getValueByKey(dictionary: dict, key: str):
 
 class Main:
     def __init__(self):
+        self.sortBy = "rules/g_humanplayers"
+        self.shouldReverseSorting = True
+
         self.root = tk.Tk()
 
         self.toolbar = ttk.Frame(self.root)
@@ -51,9 +52,9 @@ class Main:
         self.serverListWidgetHeadings = ["Ping", "Game Type", "Map", "Human Players", "All Players", "Player Limit", "Address"]
         self.serverListWidgetKeys = ["ping", "gametype", "map", "rules/g_humanplayers", "numplayers", "maxplayers", "address"]
         self.serverListWidget = ttk.Treeview(self.root, columns=self.serverListWidgetHeadings, height=40, selectmode=tk.BROWSE)
-        self.serverListWidget.heading("#0", text="Name")
+        self.serverListWidget.heading("#0", text="Name", command=lambda: self.onListHeadingClicked("name"))
         for heading in self.serverListWidgetHeadings:
-            self.serverListWidget.heading(heading, text=heading)
+            self.serverListWidget.heading(heading, text=heading, command=lambda h=heading: self.onListHeadingClicked(h))
         self.serverListWidget.pack(side=tk.TOP, fill=tk.X)
 
         self.statusBar = ttk.Label(self.root, relief=tk.RIDGE, anchor=tk.W)
@@ -64,27 +65,19 @@ class Main:
         self.serverListWidget.bind("<Double-Button-1>", self.onServerListItemDoubleclicked)
         self.root.mainloop()
 
-    def refreshServerList(self):
-        self.statusBar["text"] = "Querying..."
-        self.root.update()
-        serverListJson = getServerListJson(GAME, "no")
+    def updateServerListWidget(self):
+        def strToIntOrStr(string: str):
+            try:
+                output = int(string)
+            except:
+                output = string
+            return output
 
-        self.statusBar["text"] = "Parsing response..."
-        parsedJson = json.loads(serverListJson)
-        self.root.update()
-
-        masterJson = parsedJson[0]
-        serverJson = parsedJson[1:]
-        for item in serverJson:
-            item["name"] = item["name"].strip()
-        serverJson = sorted(serverJson, key=lambda item: getValueByKey(item, "rules/g_humanplayers"), reverse=True)
-
-        self.statusBar["text"] = "Displaying..."
-        self.root.update()
+        self.serverJson = sorted(self.serverJson, key=lambda item: strToIntOrStr(getValueByKey(item, self.sortBy)), reverse=self.shouldReverseSorting)
 
         self.serverListWidget.delete(*self.serverListWidget.get_children()) # Clear the widget
         self.serverListWidget.update()
-        for i, server in enumerate(serverJson):
+        for i, server in enumerate(self.serverJson):
             self.serverListWidget.insert(
                 "",
                 i,
@@ -103,7 +96,25 @@ class Main:
         self.serverListWidget.tag_configure("empty", foreground="gray")
         self.serverListWidget.tag_configure("notempty", foreground="blue")
 
-        self.statusBar["text"] = "Found " + str(masterJson["servers"]) + " servers, " + str(len(serverJson)) + " responsive."
+    def refreshServerList(self):
+        self.statusBar["text"] = "Querying..."
+        self.root.update()
+        serverListJson = getServerListJson(GAME)
+
+        self.statusBar["text"] = "Parsing response..."
+        parsedJson = json.loads(serverListJson)
+        self.root.update()
+
+        self.masterJson = parsedJson[0]
+        self.serverJson = parsedJson[1:]
+        for item in self.serverJson:
+            item["name"] = item["name"].strip()
+
+        self.statusBar["text"] = "Displaying..."
+        self.root.update()
+        self.updateServerListWidget()
+
+        self.statusBar["text"] = "Found " + str(self.masterJson["servers"]) + " servers, " + str(len(self.serverJson)) + " responsive."
 
     def clearStatusBarText(self, _=None): self.statusBar["text"] = ""
     def onRefreshButtonHovered(self, _): self.statusBar["text"] = "Refresh server list."
@@ -119,6 +130,16 @@ class Main:
 
     def onPlayOfflineButtonClicked(self):
         sp.Popen([GAME_EXE_PATH])
+
+    def onListHeadingClicked(self, heading):
+        if heading == "name":
+            sortBy = "name"
+        else:
+            sortBy = self.serverListWidgetKeys[self.serverListWidgetHeadings.index(heading)]
+        if self.sortBy == sortBy:
+            self.shouldReverseSorting = not self.shouldReverseSorting
+        self.sortBy = sortBy
+        self.updateServerListWidget()
 
 if __name__ == "__main__":
     main = Main()
