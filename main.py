@@ -28,7 +28,7 @@ class Main:
 
         self.toolbar = ttk.Frame(self.root)
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
-        self.refreshButtonImage = tk.PhotoImage(file="./img/refresh.png")
+        self.refreshButtonImage = tk.PhotoImage(file="./img/refresh.png").zoom(2, 2)
         self.refreshButton = ttk.Button(self.toolbar, command=self.refreshServerList, image=self.refreshButtonImage)
         self.refreshButton.pack(side=tk.LEFT)
         self.refreshButton.bind("<Enter>", self.onRefreshButtonHovered)
