@@ -1,5 +1,3 @@
-#!/usr/bin/env python3
-
 import subprocess as sp
 import os
 import bs4
