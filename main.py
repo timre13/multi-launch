@@ -29,16 +29,24 @@ class Main:
 
         self.toolbar = ttk.Frame(self.root)
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
+
         self.refreshButtonImage = tk.PhotoImage(file="./img/refresh.png").zoom(2, 2)
         self.refreshButton = ttk.Button(self.toolbar, command=self.refreshServerList, image=self.refreshButtonImage)
         self.refreshButton.pack(side=tk.LEFT)
         self.refreshButton.bind("<Enter>", self.onRefreshButtonHovered)
         self.refreshButton.bind("<Leave>", self.clearStatusBarText)
+
         self.playButtonImage = tk.PhotoImage(file="./img/play.png").zoom(2, 2)
         self.playButton = ttk.Button(self.toolbar, command=self.onServerListItemDoubleclicked, image=self.playButtonImage)
         self.playButton.pack(side=tk.LEFT)
         self.playButton.bind("<Enter>", self.onPlayButtonHovered)
         self.playButton.bind("<Leave>", self.clearStatusBarText)
+
+        self.playOfflineButtonImage = tk.PhotoImage(file="./img/play_offline.png").zoom(2, 2)
+        self.playOfflineButton = ttk.Button(self.toolbar, command=self.onPlayOfflineButtonClicked, image=self.playOfflineButtonImage)
+        self.playOfflineButton.pack(side=tk.LEFT)
+        self.playOfflineButton.bind("<Enter>", self.onPlayOfflineButtonHovered)
+        self.playOfflineButton.bind("<Leave>", self.clearStatusBarText)
 
         self.serverListWidgetHeadings = ["Ping", "Game Type", "Map", "Human Players", "All Players", "Player Limit", "Address"]
         self.serverListWidgetKeys = ["ping", "gametype", "map", "rules/g_humanplayers", "numplayers", "maxplayers", "address"]
@@ -100,6 +108,7 @@ class Main:
     def clearStatusBarText(self, _=None): self.statusBar["text"] = ""
     def onRefreshButtonHovered(self, _): self.statusBar["text"] = "Refresh server list."
     def onPlayButtonHovered(self, _): self.statusBar["text"] = "Play on the selected server."
+    def onPlayOfflineButtonHovered(self, _): self.statusBar["text"] = "Start the game without connecting to a server."
 
     def onServerListItemDoubleclicked(self, _=None):
         focusedItem = self.serverListWidget.focus()
@@ -107,6 +116,9 @@ class Main:
             return
         serverIp = self.serverListWidget.item(focusedItem)["values"][self.serverListWidgetKeys.index("address")]
         sp.Popen([GAME_EXE_PATH, "+connect", str(serverIp)])
+
+    def onPlayOfflineButtonClicked(self):
+        sp.Popen([GAME_EXE_PATH])
 
 if __name__ == "__main__":
     main = Main()
