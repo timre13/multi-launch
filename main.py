@@ -6,6 +6,7 @@ import tkinter as tk
 from tkinter import ttk
 
 GAME = "openarena"
+GAME_EXE_PATH = "openarena"
 SORT_VALUES = ("no", "ping", "address", "players", "pass", "map", "gametype", "name")
 
 def getServerListJson(game: str, sortBy: str):
@@ -32,11 +33,16 @@ class Main:
         self.refreshButton = ttk.Button(self.toolbar, command=self.refreshServerList, image=self.refreshButtonImage)
         self.refreshButton.pack(side=tk.LEFT)
         self.refreshButton.bind("<Enter>", self.onRefreshButtonHovered)
-        self.refreshButton.bind("<Leave>", self.onRefreshButtonLeft)
+        self.refreshButton.bind("<Leave>", self.clearStatusBarText)
+        self.playButtonImage = tk.PhotoImage(file="./img/play.png").zoom(2, 2)
+        self.playButton = ttk.Button(self.toolbar, command=self.onServerListItemDoubleclicked, image=self.playButtonImage)
+        self.playButton.pack(side=tk.LEFT)
+        self.playButton.bind("<Enter>", self.onPlayButtonHovered)
+        self.playButton.bind("<Leave>", self.clearStatusBarText)
 
         self.serverListWidgetHeadings = ["Ping", "Game Type", "Map", "Human Players", "All Players", "Player Limit", "Address"]
         self.serverListWidgetKeys = ["ping", "gametype", "map", "rules/g_humanplayers", "numplayers", "maxplayers", "address"]
-        self.serverListWidget = ttk.Treeview(self.root, columns=self.serverListWidgetHeadings, height=50)
+        self.serverListWidget = ttk.Treeview(self.root, columns=self.serverListWidgetHeadings, height=40, selectmode=tk.BROWSE)
         self.serverListWidget.heading("#0", text="Name")
         for heading in self.serverListWidgetHeadings:
             self.serverListWidget.heading(heading, text=heading)
@@ -91,12 +97,16 @@ class Main:
 
         self.statusBar["text"] = "Found " + str(masterJson["servers"]) + " servers, " + str(len(serverJson)) + " responsive."
 
+    def clearStatusBarText(self, _=None): self.statusBar["text"] = ""
     def onRefreshButtonHovered(self, _): self.statusBar["text"] = "Refresh server list."
-    def onRefreshButtonLeft(self, _): self.statusBar["text"] = ""
+    def onPlayButtonHovered(self, _): self.statusBar["text"] = "Play on the selected server."
 
-    def onServerListItemDoubleclicked(self, event):
-        serverIp = self.serverListWidget.item(self.serverListWidget.identify_row(event.y))["values"][self.serverListWidgetKeys.index("address")]
-        sp.Popen(["openarena", "+connect", str(serverIp)])
+    def onServerListItemDoubleclicked(self, _=None):
+        focusedItem = self.serverListWidget.focus()
+        if not focusedItem:
+            return
+        serverIp = self.serverListWidget.item(focusedItem)["values"][self.serverListWidgetKeys.index("address")]
+        sp.Popen([GAME_EXE_PATH, "+connect", str(serverIp)])
 
 if __name__ == "__main__":
     main = Main()
