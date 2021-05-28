@@ -5,54 +5,6 @@ import json
 import tkinter as tk
 from tkinter import ttk
 
-"""
-    Universal (both Master and Server lookup):
-
-    xml= [1/0] [default: 0] output as QStat's XML instead of pure HTML.  Note: colored names will still be updated
-                to HTML codes unless nocolors is defined.  (Note: many variables below do not apply to xml output.)
-    xmlcarets= [1/0] [default: 0] output carets instead of converted fonts when using xml=1
-    json= [1/0] [default: 0] output as QStat's JSON instead of pure HTML.  Note: colored names will still be updated
-                to HTML codes unless nocolors is defined.  (Note: many variables below do not apply to json output.)
-    jsoncarets= [1/0] [default: 0] output carets instead of converted fonts when using json=1
-    nocolors= [1/0] [default: 0] don't display HTML colors, hide carrets
-    hidehtmltags= [1/0] [default: 0] don't display <html>/<head>/<body> tags
-    utf8= [1/0] [default: 1] display names with UTF8 instead of ASCII.
-
-
-    Master Server lookups:
-
-    master= master server address [defaut: dpmaster.deathmask.net]
-    game= game to look up (transfusion, xonotic, nexuiz, openarena, warsow, warfork, quake, urbanterror, tremulous, steelstorm, wolfet, q3rally)
-    showping= [1/0] [default 0] hidden feature, show pings relative to Atlanta, GA, USA
-    sort= [ping,address,players,pass,map,gametype,name,no] [default: players], ping is local to Atlanta, GA, USA,
-                no = natural order (oldest first), pass & gametype only if the game supports it.
-
-    showall= show unresponsive servers [1/0] [default: 0]
-    hide= [full, empty, both] [default: N/A] hide full or empty servers (both hides full and empty)
-    hidegames= [1/0] [default: 0] hide link to gametype lookup (top of screen)
-    showonlylist= [1/0] [default: 0] show only the server list
-    showplayers= [1/0] [default: 0] show players on listing
-    oldprotocol= [#] [default: N/A] use previous protcol version (this is for games with changing protocols and must be
-                manually setup on the webserver [leave blank/don't use for current protocol])
-    hidepassworded= [1/0] [default: 0] hide servers requiring a password
-    hideheader= [1/0] [default: 0] hide the opening section with game logo, master info
-    hideinstagib= [1/0] [default: 0] hide instagib servers, only works with select games.
-
-
-    Single Server lookups:
-
-    game=game to look up (transfusion, xonotic, nexuiz, openarena, warsow, warfork, quake, urbanterror, tremulous, steelstorm, wolfet, q3rally)
-    server= query a server rather than a master server [server address in form of ip:port or hostname:port , requires game]
-    hidegames= [1/0] [default 0] hide link to gametype lookup
-        *players are automatically sorted by frags, I don't feel this should need to be changed, but could be if really needed.
-    hideheader= [1/0] [default: 0] - hide the opening section with map picture and general info
-    hideplayers= [1/0] [default: 0] - hides players
-    hiderules= [1/0] [default: 0] - hides the server rules
-    showonlylist= [1/0] [default: 0] show only the server information line
-
-    *showonlylist will be the easiest way to just get a raw listing
-"""
-
 GAME = "openarena"
 SORT_VALUES = ("no", "ping", "address", "players", "pass", "map", "gametype", "name")
 
