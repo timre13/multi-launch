@@ -74,6 +74,14 @@ class Main:
     def __init__(self):
         self.root = tk.Tk()
 
+        self.toolbar = ttk.Frame(self.root)
+        self.toolbar.pack(side=tk.TOP, fill=tk.X)
+        self.refreshButtonImage = tk.PhotoImage(file="./img/refresh.png")
+        self.refreshButton = ttk.Button(self.toolbar, command=self.refreshServerList, image=self.refreshButtonImage)
+        self.refreshButton.pack(side=tk.LEFT)
+        self.refreshButton.bind("<Enter>", self.onRefreshButtonHovered)
+        self.refreshButton.bind("<Leave>", self.onRefreshButtonLeft)
+
         self.serverListWidgetHeadings = ["Ping", "Game Type", "Map", "Human Players", "All Players", "Player Limit", "Address"]
         self.serverListWidgetKeys = ["ping", "gametype", "map", "rules/g_humanplayers", "numplayers", "maxplayers", "address"]
         self.serverListWidget = ttk.Treeview(self.root, columns=self.serverListWidgetHeadings, height=50)
@@ -82,14 +90,20 @@ class Main:
             self.serverListWidget.heading(heading, text=heading)
         self.serverListWidget.pack(side=tk.TOP, fill=tk.X)
 
-        statusBar = ttk.Label(self.root, relief=tk.RIDGE, anchor=tk.W)
-        statusBar.pack(side=tk.BOTTOM, fill=tk.X)
+        self.statusBar = ttk.Label(self.root, relief=tk.RIDGE, anchor=tk.W)
+        self.statusBar.pack(side=tk.BOTTOM, fill=tk.X)
 
-        statusBar["text"] = "Querying..."
+        self.refreshServerList()
+
+        self.serverListWidget.bind("<Double-Button-1>", self.onServerListItemDoubleclicked)
+        self.root.mainloop()
+
+    def refreshServerList(self):
+        self.statusBar["text"] = "Querying..."
         self.root.update()
         serverListJson = getServerListJson(GAME, "no")
 
-        statusBar["text"] = "Parsing response..."
+        self.statusBar["text"] = "Parsing response..."
         parsedJson = json.loads(serverListJson)
         self.root.update()
 
@@ -99,9 +113,11 @@ class Main:
             item["name"] = item["name"].strip()
         serverJson = sorted(serverJson, key=lambda item: getValueByKey(item, "rules/g_humanplayers"), reverse=True)
 
-        statusBar["text"] = "Displaying..."
+        self.statusBar["text"] = "Displaying..."
         self.root.update()
 
+        self.serverListWidget.delete(*self.serverListWidget.get_children()) # Clear the widget
+        self.serverListWidget.update()
         for i, server in enumerate(serverJson):
             self.serverListWidget.insert(
                 "",
@@ -121,11 +137,10 @@ class Main:
         self.serverListWidget.tag_configure("empty", foreground="gray")
         self.serverListWidget.tag_configure("notempty", foreground="blue")
 
-        statusBar["text"] = "Found " + str(masterJson["servers"]) + " servers, " + str(len(serverJson)) + " responsive."
+        self.statusBar["text"] = "Found " + str(masterJson["servers"]) + " servers, " + str(len(serverJson)) + " responsive."
 
-        self.serverListWidget.bind("<Double-Button-1>", self.onServerListItemDoubleclicked)
-
-        self.root.mainloop()
+    def onRefreshButtonHovered(self, _): self.statusBar["text"] = "Refresh server list."
+    def onRefreshButtonLeft(self, _): self.statusBar["text"] = ""
 
     def onServerListItemDoubleclicked(self, event):
         serverIp = self.serverListWidget.item(self.serverListWidget.identify_row(event.y))["values"][self.serverListWidgetKeys.index("address")]
