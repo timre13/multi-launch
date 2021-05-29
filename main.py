@@ -37,11 +37,17 @@ class Main:
         self.refreshButton.bind("<Enter>", self.onRefreshButtonHovered)
         self.refreshButton.bind("<Leave>", self.clearStatusBarText)
 
+        self.separator1 = ttk.Separator(self.toolbar, orient=tk.VERTICAL)
+        self.separator1.pack(side=tk.LEFT)
+
         self.playButtonImage = tk.PhotoImage(file="./img/play.png").zoom(2, 2)
         self.playButton = ttk.Button(self.toolbar, command=self.onServerListItemDoubleclicked, image=self.playButtonImage)
         self.playButton.pack(side=tk.LEFT)
         self.playButton.bind("<Enter>", self.onPlayButtonHovered)
         self.playButton.bind("<Leave>", self.clearStatusBarText)
+
+        self.separator2 = ttk.Separator(self.toolbar, orient=tk.VERTICAL)
+        self.separator2.pack(side=tk.LEFT)
 
         self.playOfflineButtonImage = tk.PhotoImage(file="./img/play_offline.png").zoom(2, 2)
         self.playOfflineButton = ttk.Button(self.toolbar, command=self.onPlayOfflineButtonClicked, image=self.playOfflineButtonImage)
