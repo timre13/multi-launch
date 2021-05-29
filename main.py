@@ -46,6 +46,12 @@ class Main:
         self.playButton.bind("<Enter>", self.onPlayButtonHovered)
         self.playButton.bind("<Leave>", self.clearStatusBarText)
 
+        self.spectateButtonImage = tk.PhotoImage(file="./img/spectate.png").zoom(2, 2)
+        self.spectateButton = ttk.Button(self.toolbar, command=self.onSpectateButtonClicked, image=self.spectateButtonImage)
+        self.spectateButton.pack(side=tk.LEFT)
+        self.spectateButton.bind("<Enter>", self.onSpectateButtonHovered)
+        self.spectateButton.bind("<Leave>", self.clearStatusBarText)
+
         self.separator2 = ttk.Separator(self.toolbar, orient=tk.VERTICAL)
         self.separator2.pack(side=tk.LEFT)
 
@@ -126,6 +132,7 @@ class Main:
     def onRefreshButtonHovered(self, _): self.statusBar["text"] = "Refresh server list."
     def onPlayButtonHovered(self, _): self.statusBar["text"] = "Play on the selected server."
     def onPlayOfflineButtonHovered(self, _): self.statusBar["text"] = "Start the game without connecting to a server."
+    def onSpectateButtonHovered(self, _): self.statusBar["text"] = "Spectate on the selected server. (may fail)"
 
     def onServerListItemDoubleclicked(self, _=None):
         focusedItem = self.serverListWidget.focus()
@@ -136,6 +143,13 @@ class Main:
 
     def onPlayOfflineButtonClicked(self):
         sp.Popen([GAME_EXE_PATH])
+
+    def onSpectateButtonClicked(self):
+        focusedItem = self.serverListWidget.focus()
+        if not focusedItem:
+            return
+        serverIp = self.serverListWidget.item(focusedItem)["values"][self.serverListWidgetKeys.index("address")]
+        sp.Popen([GAME_EXE_PATH, "+connect", str(serverIp), "+team", "s"])
 
     def onListHeadingClicked(self, heading):
         if heading == "name":
