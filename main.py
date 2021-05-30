@@ -17,8 +17,11 @@ def getServerListJson(game: str):
 
 def getValueByKey(dictionary: dict, key: str):
     result = dictionary
-    for segment in key.split("/"):
-        result = result[segment]
+    try:
+        for segment in key.split("/"):
+            result = result[segment]
+    except:
+        result = "0"
     return result
 
 class Main:
