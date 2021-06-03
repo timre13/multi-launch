@@ -30,6 +30,7 @@ class Main:
         self.shouldReverseSorting = True
 
         self.root = tk.Tk()
+        self.root.title("Multi-Launch OpenArena Launcher")
 
         self.toolbar = ttk.Frame(self.root)
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
