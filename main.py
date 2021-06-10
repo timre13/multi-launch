@@ -1,19 +1,22 @@
 import subprocess as sp
+from urllib.request import urlopen, Request
 import os
-import bs4
+import sys
 import json
+import time
 import tkinter as tk
 from tkinter import ttk
 
 GAME = "openarena"
 GAME_EXE_PATH = "openarena"
+MASTER_SERVER_REQUEST_TIMEOUT_S = 20
 
 def getServerListJson(game: str):
-    # Note: Don't use urrlib, it's slow
-    return sp.run(
-        ["curl", "https://dpmaster.deathmask.net/?game={}&json=1&nocolors=1&showping=1".format(game), "-s"],
-        stdout=sp.PIPE,
-        stderr=sp.PIPE).stdout.decode().strip()
+    request = Request("https://dpmaster.deathmask.net/?game={}&json=1&nocolors=1&showping=1".format(game))
+    try:
+        return urlopen(request, timeout=MASTER_SERVER_REQUEST_TIMEOUT_S).read().decode("utf-8")
+    except:
+        return "ERROR: " + str(sys.exc_info()[1])
 
 def getValueByKey(dictionary: dict, key: str):
     result = dictionary
@@ -115,7 +118,12 @@ class Main:
     def refreshServerList(self):
         self.statusBar["text"] = "Querying..."
         self.root.update()
+        startTime = time.time()
         serverListJson = getServerListJson(GAME)
+
+        if serverListJson.startswith("ERROR: "):
+            self.statusBar["text"] = serverListJson
+            return
 
         self.statusBar["text"] = "Parsing response..."
         parsedJson = json.loads(serverListJson)
@@ -130,7 +138,7 @@ class Main:
         self.root.update()
         self.updateServerListWidget()
 
-        self.statusBar["text"] = "Found " + str(self.masterJson["servers"]) + " servers, " + str(len(self.serverJson)) + " responsive."
+        self.statusBar["text"] = "Found {} servers, {} responsive. (took {:.2f}s)".format(self.masterJson["servers"], len(self.serverJson), time.time()-startTime)
 
     def clearStatusBarText(self, _=None): self.statusBar["text"] = ""
     def onRefreshButtonHovered(self, _): self.statusBar["text"] = "Refresh server list."
