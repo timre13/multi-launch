@@ -88,24 +88,31 @@ class Main:
         self.playOfflineButton.bind("<Enter>", self.onPlayOfflineButtonHovered)
         self.playOfflineButton.bind("<Leave>", self.clearStatusBarText)
 
+        self.serverListFrame = ttk.Frame(self.root)
+        self.serverListFrame.pack(fill=tk.BOTH, side=tk.TOP, expand=True)
+
+        self.serverListWidgetScrollbar = ttk.Scrollbar(self.serverListFrame)
+        self.serverListWidgetScrollbar.pack(fill=tk.Y, side=tk.RIGHT)
+
         self.serverListWidgetHeadings = ["Ping", "Game Type", "Map", "Human Players", "All Players", "Player Limit", "Address"]
         self.serverListWidgetKeys = ["ping", "gametype", "map", "rules/g_humanplayers", "numplayers", "maxplayers", "address"]
-        # TODO: Scrollbar
-        self.serverListWidget = ttk.Treeview(self.root, columns=self.serverListWidgetHeadings, height=10, selectmode=tk.BROWSE)
+        self.serverListWidget = ttk.Treeview(self.serverListFrame, columns=self.serverListWidgetHeadings, height=10,
+                                             selectmode=tk.BROWSE, yscrollcommand=self.serverListWidgetScrollbar.set)
         self.serverListWidget.heading("#0", text="Name", command=lambda: self.onListHeadingClicked("name"))
         for heading in self.serverListWidgetHeadings:
             self.serverListWidget.heading(heading, text=heading, command=lambda h=heading: self.onListHeadingClicked(h))
         self.serverListWidget.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
+        self.serverListWidgetScrollbar.config(command=self.serverListWidget.yview)
 
         self.serverInfoFrame = ttk.LabelFrame(self.root, text="Server info")
         self.serverInfoFrame.pack(fill=tk.BOTH)
 
-        # TODO
-        #self.serverInfoWidgetScrollbar = ttk.Scrollbar(self.serverInfoFrame)
-        #self.serverInfoWidgetScrollbar.pack(fill=tk.Y, side=tk.RIGHT)
+        self.serverInfoWidgetScrollbar = ttk.Scrollbar(self.serverInfoFrame)
+        self.serverInfoWidgetScrollbar.pack(fill=tk.Y, side=tk.RIGHT)
 
-        self.serverInfoWidget = ttk.Treeview(self.serverInfoFrame, height=10, show="tree", selectmode=tk.BROWSE, columns=("1",))
+        self.serverInfoWidget = ttk.Treeview(self.serverInfoFrame, height=10, show="tree", selectmode=tk.BROWSE, columns=("1",), yscrollcommand=self.serverInfoWidgetScrollbar.set)
         self.serverInfoWidget.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+        self.serverInfoWidgetScrollbar.config(command=self.serverInfoWidget.yview)
 
         self.statusBar = ttk.Label(self.root, relief=tk.RIDGE, anchor=tk.W)
         self.statusBar.pack(side=tk.BOTTOM, fill=tk.X)
