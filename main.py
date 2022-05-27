@@ -6,6 +6,7 @@ import json
 import time
 import tkinter as tk
 from tkinter import ttk
+from tkinter import font
 
 GAME = "openarena"
 GAME_EXE_PATH = "openarena"
@@ -34,6 +35,10 @@ class Main:
 
         self.root = tk.Tk()
         self.root.title("Multi-Launch OpenArena Launcher")
+
+        self.monoFont = font.Font(font="TkFixedFont")
+        style = ttk.Style()
+        style.configure("Treeview", font=self.monoFont)
 
         self.toolbar = ttk.Frame(self.root)
         self.toolbar.pack(side=tk.TOP, fill=tk.X)
