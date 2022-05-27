@@ -1,6 +1,5 @@
 import subprocess as sp
 from urllib.request import urlopen, Request
-import os
 import sys
 import json
 import time
@@ -11,11 +10,27 @@ from tkinter import font
 GAME = "openarena"
 GAME_EXE_PATH = "openarena"
 MASTER_SERVER_REQUEST_TIMEOUT_S = 20
+SERVER_REQ_TIMEOUT_S = 20
 
+"""
+    Query the master server to get server list.
+    Only provides basic info for each server.
+"""
 def getServerListJson(game: str):
     request = Request("https://dpmaster.deathmask.net/?game={}&json=1&nocolors=1&showping=1".format(game))
     try:
         return urlopen(request, timeout=MASTER_SERVER_REQUEST_TIMEOUT_S).read().decode("utf-8")
+    except:
+        return "ERROR: " + str(sys.exc_info()[1])
+
+"""
+    Query a specific server.
+    Provides all the possible info of the server.
+"""
+def getServerInfoJson(game: str, server: str):
+    request = Request("https://dpmaster.deathmask.net/?game={}&json=1&nocolors=1&server={}".format(game, server))
+    try:
+        return urlopen(request, timeout=SERVER_REQ_TIMEOUT_S).read().decode("utf-8")
     except:
         return "ERROR: " + str(sys.exc_info()[1])
 
@@ -75,17 +90,29 @@ class Main:
 
         self.serverListWidgetHeadings = ["Ping", "Game Type", "Map", "Human Players", "All Players", "Player Limit", "Address"]
         self.serverListWidgetKeys = ["ping", "gametype", "map", "rules/g_humanplayers", "numplayers", "maxplayers", "address"]
+        # TODO: Scrollbar
         self.serverListWidget = ttk.Treeview(self.root, columns=self.serverListWidgetHeadings, height=10, selectmode=tk.BROWSE)
         self.serverListWidget.heading("#0", text="Name", command=lambda: self.onListHeadingClicked("name"))
         for heading in self.serverListWidgetHeadings:
             self.serverListWidget.heading(heading, text=heading, command=lambda h=heading: self.onListHeadingClicked(h))
         self.serverListWidget.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
+        self.serverInfoFrame = ttk.LabelFrame(self.root, text="Server info")
+        self.serverInfoFrame.pack(fill=tk.BOTH)
+
+        # TODO
+        #self.serverInfoWidgetScrollbar = ttk.Scrollbar(self.serverInfoFrame)
+        #self.serverInfoWidgetScrollbar.pack(fill=tk.Y, side=tk.RIGHT)
+
+        self.serverInfoWidget = ttk.Treeview(self.serverInfoFrame, height=10, show="tree", selectmode=tk.BROWSE, columns=("1",))
+        self.serverInfoWidget.pack(side=tk.BOTTOM, fill=tk.BOTH, expand=True)
+
         self.statusBar = ttk.Label(self.root, relief=tk.RIDGE, anchor=tk.W)
         self.statusBar.pack(side=tk.BOTTOM, fill=tk.X)
 
         self.refreshServerList()
 
+        self.serverListWidget.bind("<ButtonRelease-1>", self.onServerListItemClicked)
         self.serverListWidget.bind("<Double-Button-1>", self.onServerListItemDoubleclicked)
         self.root.mainloop()
 
@@ -150,6 +177,58 @@ class Main:
     def onPlayButtonHovered(self, _): self.statusBar["text"] = "Play on the selected server."
     def onPlayOfflineButtonHovered(self, _): self.statusBar["text"] = "Start the game without connecting to a server."
     def onSpectateButtonHovered(self, _): self.statusBar["text"] = "Spectate on the selected server. (may fail)"
+
+    def onServerListItemClicked(self, _=None):
+        self.serverInfoWidget.delete(*self.serverInfoWidget.get_children()) # Clear the widget
+        focusedItem = self.serverListWidget.focus()
+        if not focusedItem:
+            return
+        self.statusBar["text"] = "Getting server info..."
+        self.root.update()
+
+        serverAddr = self.serverListWidget.item(focusedItem)["values"][self.serverListWidgetKeys.index("address")]
+        serverJson = getServerInfoJson(game=GAME, server=serverAddr)
+
+        if serverJson.startswith("ERROR: "):
+            self.statusBar["text"] = serverJson
+            return
+
+        parsedJson = json.loads(serverJson)[0]
+
+        # TODO: Show map image
+
+        def addItem(text: str, parent="", vals=[]) -> str:
+            id = self.serverInfoWidget.insert(
+                parent,
+                index="end",
+                text=text.strip(),
+                values=[str(x).strip() for x in vals],
+                tags=[
+                    "even" if addItem.i % 2 == 0 else "odd",
+                ],
+                open=True
+            )
+            addItem.i += 1
+            self.serverListWidget.update()
+            return id
+        addItem.i = 0
+
+        for k, v in parsedJson.items():
+            if k == "rules":
+                id = addItem(text=k)
+                for kk, vv in v.items():
+                    addItem(parent=id, text=kk, vals=[vv])
+            elif k == "players":
+                id = addItem(text=k)
+                for vv in v:
+                    addItem(parent=id, text=vv["name"], vals=["Ping: {} | Score: {}".format(str(vv["ping"]).rjust(3, " "), vv["score"])])
+            else:
+                addItem(text=k, vals=[v])
+        self.serverInfoWidget.tag_configure("even", background="#dddddd")
+        self.serverInfoWidget.tag_configure("odd", background="#eeeeee")
+
+        self.statusBar["text"] = "Done."
+        self.root.update()
 
     def onServerListItemDoubleclicked(self, _=None):
         focusedItem = self.serverListWidget.focus()
