@@ -1,3 +1,4 @@
+import typing
 import subprocess as sp
 from urllib.request import urlopen, Request
 import sys
@@ -6,17 +7,20 @@ import time
 import tkinter as tk
 from tkinter import ttk
 from tkinter import font
+from PIL import ImageTk, Image
+import io
 
 GAME = "openarena"
 GAME_EXE_PATH = "openarena"
 MASTER_SERVER_REQUEST_TIMEOUT_S = 20
 SERVER_REQ_TIMEOUT_S = 20
+MAP_IMG_SIZE = 128
 
 """
     Query the master server to get server list.
     Only provides basic info for each server.
 """
-def getServerListJson(game: str):
+def getServerListJson(game: str) -> str:
     request = Request("https://dpmaster.deathmask.net/?game={}&json=1&nocolors=1&showping=1".format(game))
     try:
         return urlopen(request, timeout=MASTER_SERVER_REQUEST_TIMEOUT_S).read().decode("utf-8")
@@ -27,12 +31,34 @@ def getServerListJson(game: str):
     Query a specific server.
     Provides all the possible info of the server.
 """
-def getServerInfoJson(game: str, server: str):
+def getServerInfoJson(game: str, server: str) -> str:
     request = Request("https://dpmaster.deathmask.net/?game={}&json=1&nocolors=1&server={}".format(game, server))
     try:
         return urlopen(request, timeout=SERVER_REQ_TIMEOUT_S).read().decode("utf-8")
     except:
         return "ERROR: " + str(sys.exc_info()[1])
+
+def getMapImg(mapName: str) -> typing.Union[ImageTk.PhotoImage, None]:
+    print("Getting:", "http://www.dpmaster.deathmask.net/mapthumbs/{}/{}.jpg".format(GAME, mapName))
+    request = Request("http://www.dpmaster.deathmask.net/mapthumbs/{}/{}.jpg".format(GAME, mapName))
+    try:
+        data = urlopen(request, timeout=MASTER_SERVER_REQUEST_TIMEOUT_S).read()
+        img = Image.open(io.BytesIO(data)).resize((MAP_IMG_SIZE, MAP_IMG_SIZE))
+        return ImageTk.PhotoImage(image=img)
+    except Exception:
+        return None
+
+def getPlaceholderMapImg() -> typing.Union[ImageTk.PhotoImage, None]:
+    request = Request("https://dpmaster.deathmask.net/game/{}.gif".format(GAME))
+    try:
+        data = urlopen(request, timeout=MASTER_SERVER_REQUEST_TIMEOUT_S).read()
+        img_ = Image.open(io.BytesIO(data))
+        img = Image.new(mode=img_.mode, size=(img_.width, img_.width))
+        img.paste(img_, box=(0, int(img.height/2-img_.height/2)))
+        return ImageTk.PhotoImage(image=img.resize((MAP_IMG_SIZE, MAP_IMG_SIZE)))
+    except Exception:
+        return None
+
 
 def getValueByKey(dictionary: dict, key: str):
     result = dictionary
@@ -106,6 +132,11 @@ class Main:
 
         self.serverInfoFrame = ttk.LabelFrame(self.root, text="Server info")
         self.serverInfoFrame.pack(fill=tk.BOTH)
+
+        self.mapImagePlaceholder = getPlaceholderMapImg()
+
+        self.serverInfoMapImg = ttk.Label(self.serverInfoFrame, image=self.mapImagePlaceholder)
+        self.serverInfoMapImg.pack(side=tk.LEFT)
 
         self.serverInfoWidgetScrollbar = ttk.Scrollbar(self.serverInfoFrame)
         self.serverInfoWidgetScrollbar.pack(fill=tk.Y, side=tk.RIGHT)
@@ -187,11 +218,12 @@ class Main:
 
     def onServerListItemClicked(self, _=None):
         self.serverInfoWidget.delete(*self.serverInfoWidget.get_children()) # Clear the widget
+        self.serverInfoMapImg.config(image=self.mapImagePlaceholder) # Clear map image widget
         focusedItem = self.serverListWidget.focus()
         if not focusedItem:
             return
         self.statusBar["text"] = "Getting server info..."
-        self.root.update()
+        self.statusBar.update()
 
         serverAddr = self.serverListWidget.item(focusedItem)["values"][self.serverListWidgetKeys.index("address")]
         serverJson = getServerInfoJson(game=GAME, server=serverAddr)
@@ -201,8 +233,6 @@ class Main:
             return
 
         parsedJson = json.loads(serverJson)[0]
-
-        # TODO: Show map image
 
         def addItem(text: str, parent="", vals=[]) -> str:
             id = self.serverInfoWidget.insert(
@@ -234,8 +264,14 @@ class Main:
         self.serverInfoWidget.tag_configure("even", background="#dddddd")
         self.serverInfoWidget.tag_configure("odd", background="#eeeeee")
 
+        self.statusBar["text"] = "Getting map image..."
+        self.statusBar.update()
+        self.mapImg = getMapImg(parsedJson["map"])
+        if self.mapImg:
+            self.serverInfoMapImg.config(image=self.mapImg)
+            self.serverInfoMapImg.update()
+
         self.statusBar["text"] = "Done."
-        self.root.update()
 
     def onServerListItemDoubleclicked(self, _=None):
         focusedItem = self.serverListWidget.focus()
