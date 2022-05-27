@@ -70,11 +70,11 @@ class Main:
 
         self.serverListWidgetHeadings = ["Ping", "Game Type", "Map", "Human Players", "All Players", "Player Limit", "Address"]
         self.serverListWidgetKeys = ["ping", "gametype", "map", "rules/g_humanplayers", "numplayers", "maxplayers", "address"]
-        self.serverListWidget = ttk.Treeview(self.root, columns=self.serverListWidgetHeadings, height=40, selectmode=tk.BROWSE)
+        self.serverListWidget = ttk.Treeview(self.root, columns=self.serverListWidgetHeadings, height=10, selectmode=tk.BROWSE)
         self.serverListWidget.heading("#0", text="Name", command=lambda: self.onListHeadingClicked("name"))
         for heading in self.serverListWidgetHeadings:
             self.serverListWidget.heading(heading, text=heading, command=lambda h=heading: self.onListHeadingClicked(h))
-        self.serverListWidget.pack(side=tk.TOP, fill=tk.X)
+        self.serverListWidget.pack(side=tk.TOP, fill=tk.BOTH, expand=True)
 
         self.statusBar = ttk.Label(self.root, relief=tk.RIDGE, anchor=tk.W)
         self.statusBar.pack(side=tk.BOTTOM, fill=tk.X)
