@@ -75,7 +75,7 @@ class Main:
         self.shouldReverseSorting = True
 
         self.root = tk.Tk()
-        self.root.title("Multi-Launch OpenArena Launcher")
+        self.root.title("OALaunch OpenArena Launcher")
 
         self.monoFont = font.Font(font="TkFixedFont")
         style = ttk.Style()

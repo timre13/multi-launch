@@ -1,4 +1,4 @@
-# Multi-Launch
+# OALaunch
 
 A multiplayer launcher for *[OpenArena](http://openarena.ws)*, a *Quake III Arena* clone.
 
